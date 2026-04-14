@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KaraOK — ร้องเพลงออนไลน์</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f0e8; --surface: #ffffff; --surface2: #faf7f2;
+      --accent: #e8472a; --accent2: #f7a600;
+      --text: #1a1208; --muted: #8a7d6b; --border: #e2d9cc;
+      --shadow: rgba(26,18,8,0.10);
+    }
+    body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+    body::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: radial-gradient(circle at 15% 20%, rgba(232,71,42,0.07) 0%, transparent 50%), radial-gradient(circle at 85% 80%, rgba(247,166,0,0.08) 0%, transparent 50%);
+    }
+    header {
+      position: relative; z-index: 10; padding: 18px 24px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1.5px solid var(--border);
+      background: rgba(245,240,232,0.92); backdrop-filter: blur(10px);
+    }
+    .logo { display: flex; align-items: baseline; gap: 2px; }
+    .logo-main { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 900; color: var(--accent); letter-spacing: -1px; }
+    .logo-sub  { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 700; color: var(--text); letter-spacing: -1px; }
+    .logo-tag  { font-size: 0.66rem; font-weight: 600; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-left: 8px; align-self: center; }
+    .mic-icon  { font-size: 1.4rem; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+
+    .app { position: relative; z-index: 1; display: grid; grid-template-columns: 360px 1fr; height: calc(100vh - 65px); }
+
+    /* LEFT */
+    .left-panel { border-right: 1.5px solid var(--border); background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
+    .search-area { padding: 16px 14px 10px; border-bottom: 1.5px solid var(--border); }
+    .search-label { font-size: 0.66rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: block; }
+    .search-box { display: flex; gap: 7px; }
+    .search-input {
+      flex: 1; border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 10px 13px; font-family: 'Sarabun', sans-serif; font-size: 0.9rem;
+      color: var(--text); background: var(--surface2); outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,71,42,0.12); }
+    .search-input::placeholder { color: var(--muted); }
+    .btn-search {
+      background: var(--accent); color: white; border: none; border-radius: 12px;
+      padding: 10px 14px; font-size: 1rem; cursor: pointer; transition: background 0.2s, transform 0.15s;
+    }
+    .btn-search:hover { background: #c73820; transform: scale(1.05); }
+    .quick-tags { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; }
+    .tag {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 20px;
+      padding: 3px 10px; font-size: 0.74rem; color: var(--muted); cursor: pointer;
+      transition: all 0.15s; font-family: 'Sarabun', sans-serif;
+    }
+    .tag:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+    .results-header { padding: 10px 14px 5px; display: flex; align-items: center; justify-content: space-between; }
+    .results-title { font-size: 0.66rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .results-count { font-size: 0.72rem; color: var(--accent); font-weight: 600; }
+
+    .results-list { flex: 1; overflow-y: auto; padding: 0 8px 8px; }
+    .results-list::-webkit-scrollbar { width: 3px; }
+    .results-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .song-card {
+      display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px;
+      cursor: pointer; transition: background 0.15s; margin-bottom: 3px; border: 1.5px solid transparent;
+    }
+    .song-card:hover { background: var(--surface2); border-color: var(--border); }
+    .song-card.active { background: rgba(232,71,42,0.07); border-color: rgba(232,71,42,0.3); }
+    .song-thumb { width: 80px; height: 46px; border-radius: 7px; object-fit: cover; background: var(--border); flex-shrink: 0; }
+    .song-thumb-placeholder { width: 80px; height: 46px; border-radius: 7px; background: linear-gradient(135deg, var(--border), var(--surface2)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    .song-info { flex: 1; min-width: 0; }
+    .song-title { font-size: 0.83rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .song-channel { font-size: 0.71rem; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .play-btn {
+      width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: white;
+      border: none; font-size: 0.62rem; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; opacity: 0; transition: opacity 0.15s;
+    }
+    .song-card:hover .play-btn { opacity: 1; }
+    .song-card.active .play-btn { opacity: 1; background: var(--accent2); }
+
+    /* RIGHT */
+    .right-panel { display: flex; flex-direction: column; background: var(--bg); }
+    .player-area { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .player-top { padding: 14px 22px 8px; }
+    .now-playing-label { font-size: 0.66rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 3px; }
+    .now-playing-title { font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 700; color: var(--text); line-height: 1.3; }
+    .now-playing-channel { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+    .video-wrapper { flex: 1; margin: 0 22px; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 40px var(--shadow); background: #000; min-height: 0; }
+    .video-wrapper iframe { width: 100%; height: 100%; border: none; display: block; }
+
+    .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); gap: 12px; padding: 40px; text-align: center; }
+    .empty-icon { font-size: 3.5rem; opacity: 0.35; animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    .empty-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; color: var(--text); opacity: 0.35; }
+    .empty-sub { font-size: 0.86rem; opacity: 0.55; max-width: 260px; line-height: 1.6; }
+
+    .bottom-bar { padding: 10px 22px; display: flex; align-items: center; gap: 10px; border-top: 1.5px solid var(--border); background: var(--surface); }
+    .badge { background: rgba(232,71,42,0.1); color: var(--accent); border-radius: 20px; padding: 3px 11px; font-size: 0.72rem; font-weight: 600; }
+    .spacer { flex: 1; }
+    .yt-link { display: flex; align-items: center; gap: 5px; font-size: 0.74rem; color: var(--muted); text-decoration: none; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); transition: all 0.15s; }
+    .yt-link:hover { background: var(--surface2); color: var(--accent); }
+
+    .loading-state { padding: 32px 16px; text-align: center; color: var(--muted); font-size: 0.86rem; }
+    .spinner { width: 26px; height: 26px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 10px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .no-result { padding: 28px 14px; text-align: center; color: var(--muted); font-size: 0.84rem; line-height: 1.7; }
+
+    @media (max-width: 700px) {
+      .app { grid-template-columns: 1fr; grid-template-rows: 46vh 1fr; }
+      .left-panel { border-right: none; border-bottom: 1.5px solid var(--border); }
+      .video-wrapper { margin: 0 12px; border-radius: 12px; }
+      .player-top { padding: 10px 12px 6px; }
+      .bottom-bar { padding: 8px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-main">Kara</span><span class="logo-sub">OK</span>
+    <span class="logo-tag">ร้องเพลงออนไลน์</span>
+  </div>
+  <span class="mic-icon">🎤</span>
+</header>
+
+<div class="app">
+  <!-- LEFT -->
+  <div class="left-panel">
+    <div class="search-area">
+      <span class="search-label">ค้นหาเพลง</span>
+      <div class="search-box">
+        <input class="search-input" id="searchInput" type="text" placeholder="ชื่อเพลง / ศิลปิน..." autocomplete="off"/>
+        <button class="btn-search" id="searchBtn">🔍</button>
+      </div>
+      <div class="quick-tags" id="quickTags">
+        <span class="tag">ลูกทุ่ง</span>
+        <span class="tag">สตริง</span>
+        <span class="tag">หมอลำ</span>
+        <span class="tag">เพลงรัก</span>
+        <span class="tag">ป๊อปไทย</span>
+        <span class="tag">อีสาน</span>
+      </div>
+    </div>
+    <div class="results-header">
+      <span class="results-title">รายการเพลง</span>
+      <span class="results-count" id="resultsCount"></span>
+    </div>
+    <div class="results-list" id="resultsList">
+      <div class="no-result">🎵 พิมพ์ชื่อเพลงหรือศิลปิน<br>แล้วกดค้นหาได้เลยครับ</div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right-panel">
+    <div class="player-area" id="playerArea">
+      <div class="empty-state">
+        <div class="empty-icon">🎙️</div>
+        <div class="empty-title">เลือกเพลงเพื่อเริ่มร้อง</div>
+        <div class="empty-sub">ค้นหาเพลงด้านซ้าย แล้วกดเปิดคาราโอเกะได้เลยครับ</div>
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <span class="badge">🎵 YouTube Karaoke</span>
+      <div class="spacer"></div>
+      <a class="yt-link" id="ytLink" href="#" target="_blank" style="display:none">▶ เปิดใน YouTube</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_KEY = 'AIzaSyB08FbTdFyD6m7TL4SvlJF6cxed7KrD6P8';
+  const searchInput  = document.getElementById('searchInput');
+  const searchBtn    = document.getElementById('searchBtn');
+  const resultsList  = document.getElementById('resultsList');
+  const resultsCount = document.getElementById('resultsCount');
+  const playerArea   = document.getElementById('playerArea');
+  const ytLink       = document.getElementById('ytLink');
+  let currentCard    = null;
+
+  document.getElementById('quickTags').querySelectorAll('.tag').forEach(tag => {
+    tag.addEventListener('click', () => {
+      searchInput.value = tag.textContent + ' คาราโอเกะ';
+      doSearch();
+    });
+  });
+
+  searchBtn.addEventListener('click', doSearch);
+  searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+  async function doSearch() {
+    const q = searchInput.value.trim();
+    if (!q) return;
+    const query = (q.includes('คาราโอเกะ') || q.toLowerCase().includes('karaoke')) ? q : q + ' คาราโอเกะ';
+    resultsList.innerHTML = `<div class="loading-state"><div class="spinner"></div>กำลังค้นหา...</div>`;
+    resultsCount.textContent = '';
+    try {
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=20&key=${API_KEY}`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      if (data.error) { resultsList.innerHTML = `<div class="no-result">❌ ${data.error.message}</div>`; return; }
+      if (!data.items || data.items.length === 0) { resultsList.innerHTML = `<div class="no-result">ไม่พบผลลัพธ์<br>ลองค้นหาด้วยคำอื่นครับ</div>`; return; }
+      renderResults(data.items);
+    } catch(err) {
+      resultsList.innerHTML = `<div class="no-result">⚠️ เชื่อมต่อไม่ได้<br>กรุณาตรวจสอบอินเทอร์เน็ตครับ</div>`;
+    }
+  }
+
+  function renderResults(items) {
+    resultsCount.textContent = `${items.length} รายการ`;
+    resultsList.innerHTML = '';
+    items.forEach(item => {
+      const vid     = item.id.videoId;
+      const title   = item.snippet.title;
+      const channel = item.snippet.channelTitle;
+      const thumb   = item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url;
+      const card    = document.createElement('div');
+      card.className = 'song-card';
+      card.innerHTML = `
+        ${thumb ? `<img class="song-thumb" src="${thumb}" alt="" loading="lazy">` : `<div class="song-thumb-placeholder">🎵</div>`}
+        <div class="song-info">
+          <div class="song-title">${esc(title)}</div>
+          <div class="song-channel">${esc(channel)}</div>
+        </div>
+        <button class="play-btn">▶</button>
+      `;
+      card.addEventListener('click', () => playVideo(vid, title, channel, card));
+      resultsList.appendChild(card);
+    });
+  }
+
+  function playVideo(videoId, title, channel, card) {
+    if (currentCard) currentCard.classList.remove('active');
+    card.classList.add('active');
+    currentCard = card;
+    playerArea.innerHTML = `
+      <div class="player-top">
+        <div class="now-playing-label">🎤 กำลังเล่น</div>
+        <div class="now-playing-title">${esc(title)}</div>
+        <div class="now-playing-channel">${esc(channel)}</div>
+      </div>
+      <div class="video-wrapper">
+        <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen></iframe>
+      </div>
+    `;
+    ytLink.href = `https://www.youtube.com/watch?v=${videoId}`;
+    ytLink.style.display = 'flex';
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
